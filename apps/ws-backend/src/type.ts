@@ -13,6 +13,10 @@ export type IncominMessage={
 }
 
 export type OutgoingMessages={
+    type:"current-state",
+    state:GameState
+}|
+{
     type:"bet",
     clientId:string,
     amount:number,
@@ -47,14 +51,14 @@ export type OutgoingMessages={
 }
 
 export enum COINS {
-    One,
-    Five,
-    Ten,
-    Twenty,
-    Fifty,
-    Hundred,
-    TwoHundredFifty,
-    FiveHundred,
+    One =1,
+    Five=5,
+    Ten=10,
+    Twenty=20,
+    Fifty=50,
+    Hundred=100,
+    TwoHundredFifty=250,
+    FiveHundred=500,
 }
 export enum Number{
     Zero,

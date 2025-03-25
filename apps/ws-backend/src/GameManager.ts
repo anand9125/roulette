@@ -15,11 +15,16 @@ export class GameManager {
         return this.instance;
     }
     //end user will call this
-   public bet(amount:number,betNumber:Number,id:number ){
-    if(this.state===GameState.CanBet){
-        this.bets.push({id,amount,number:betNumber})
-        return true  
-    }
+    public bet(amount: number, betNumber: Number, id: number): boolean {
+       console.log(this.state)
+       console.log(id,amount,betNumber)
+      if (this.state === GameState.CanBet) {
+          this.bets.push({ id, amount, number: betNumber });
+          console.log("i am reached here")
+          console.log(this.bets)
+          return true;
+      }
+      return false
   }
 
   //only admin can call this
@@ -38,19 +43,23 @@ export class GameManager {
     })
   }
   //a function will take final output as input this will be final result
-  public end(outPut:Number){
-    //probably we should be cached as well 
-      this.lastWinner=outPut;
-      this.bets.forEach(bet=>{
-        if(bet.number===outPut){
-            UserManager.getInstance().won(bet.id,bet.amount,outPut);
-      }
-      else{
-          UserManager.getInstance().lost(bet.id,bet.amount,outPut);
-      }
-     })
-    this.state=GameState.GameOver;
-    this.lastWinner=outPut
-    UserManager.getInstance().flush(outPut);
-  }
+  public end(output: Number) {
+    this.lastWinner = output;
+    console.log("hiiiiiiiiiiiiiiiiii",output)
+    console.log(this.bets);
+    this.bets.forEach(bet => {
+        if (bet.number === output) {
+          console.log("yes you won")
+            UserManager.getInstance().won(bet.id, bet.amount, output);
+        } else {
+            UserManager.getInstance().lost(bet.id, bet.amount, output);
+        }
+    });
+
+    this.state = GameState.GameOver;
+    this.lastWinner = output;
+    UserManager.getInstance().flush(output);
+    this.bets  = []
+}
+
 }

@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { COINS, IncominMessage, Number, OutgoingMessages } from "./type";
+import { COINS, GameState, IncominMessage, Number, OutgoingMessages } from "./type";
 import { GameManager } from "./GameManager";
 
 let MULTIPLIER=17;
@@ -28,16 +28,28 @@ export class User {
         try{
             const message :IncominMessage=JSON.parse(data)
             if(message.type==="bet"){
-                GameManager.getInstance().bet(message.amount,message.number,this.id)
+                this.bet(message.clientId, message.amount, message.number);
+               
             }
             if(this.isAdmin && message.type==="start-game"){
-                GameManager.getInstance().start();
+                console.log("start game")
+                if (GameManager.getInstance().state === GameState.GameOver) {
+                    GameManager.getInstance().start();
+                }
             }
-            if(this.isAdmin && message.type==="end-game"){
-                GameManager.getInstance().end(message.output);
+           
+            if (this.isAdmin && message.type === "end-game") {
+                console.log("end game")
+                if (GameManager.getInstance().state === GameState.CantBet) {
+                    GameManager.getInstance().end(message.output);
+                }
             }
-            if(this.isAdmin && message.type==="stop-bets"){
-                GameManager.getInstance().stopBets();
+
+            if (this.isAdmin && message.type === "stop-bets") {
+                console.log("stop bets")
+                if (GameManager.getInstance().state === GameState.CanBet) {
+                    GameManager.getInstance().stopBets();
+                }
             }
         }
         catch(e){
@@ -45,13 +57,13 @@ export class User {
         }
        })
     }
-    flush(outPut:Number){
+    flush(output:Number){
         if(this.lastWon==0){
             this.send({
                 type:"lost",
                 balance:this.balance,            
                 locked:this.locked,
-                outcome:outPut,
+                outcome:output,
             })
         }else{
             this.send({
@@ -59,12 +71,13 @@ export class User {
                 type:"won",
                 balance:this.balance,            
                 locked:this.locked,
-                outcome:outPut,
+                outcome:output,
             })
         }
         this.lastWon=0
     }
     bet(clientId:string,amount:COINS,betNumber:Number) {
+        console.log("hiiiiiiiiiiiiiiiiii")
         if(this.balance<amount){
             this.send({ 
                 clientId,                  
@@ -78,6 +91,8 @@ export class User {
         this.locked += amount;  // Moves the amount to "locked" state
         const response = GameManager.getInstance().bet(amount,betNumber,this.id);
          //now let the gamemanage knows ki bet has been done
+          console.log(response)
+          console.log("hii")
          if(response){
             this.send({ 
                 clientId,                   //every bet should have the client side id also so that user can track ki ye bet lgi h ya nhi 
@@ -88,6 +103,7 @@ export class User {
              })
          }
          else{
+            console.log("bye")
             this.send({ 
                 clientId, //so when the user spracing the bet form the forntend they know kaun si bet ki responcse aaya h kaun si bet undo karni h kaun si nhi 
                 type: "bet-undo",
@@ -100,13 +116,14 @@ export class User {
     send(payload:OutgoingMessages){
         this.ws.send(JSON.stringify(payload))
     }
-    won(amount:number,outPut:Number){
-        const wonAmount = amount *(outPut===Number.Zero?MULTIPLIER*2:MULTIPLIER);
+    won(amount: number, output: Number) {
+        const wonAmount = amount * (output === Number.Zero ? MULTIPLIER * 2 : MULTIPLIER);
         this.balance += wonAmount;
         this.locked -= amount;
-        this.lastWon = wonAmount;
+        this.lastWon += wonAmount;
     }
-    lost(amount:number,outPut:Number){
-        this.locked-=amount;
+
+    lost(amount: number, _output: Number) {
+        this.locked -= amount;
     }
 }

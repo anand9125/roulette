@@ -1,6 +1,7 @@
 import { WebSocket } from "ws";
 import { Number, OutgoingMessages } from "./type";
 import { User } from "./User";
+import { GameManager } from "./GameManager";
 
 
 let ID=1;
@@ -22,12 +23,18 @@ export class UserManager {
     addUser(ws:WebSocket,name:string,isAdmin:boolean){
         let id=ID;
        // this._user.push(new User( that why this become (when we are making object insted of array)
-        this._user[id]=new User(
+      const user=  new User(
             id,
             name,
             ws,
             isAdmin
         )
+        this._user[id]= user;
+        user.send({
+            type:"current-state",
+            state:GameManager.getInstance().state
+        })
+
         ws.on("close",()=>this.removeUser(id))
         ID++;
     }
@@ -47,12 +54,14 @@ export class UserManager {
             }
         })
     }
-    won(id:number,amount:number,outPut:Number){
-     this._user[id].won(amount,outPut)
-
+    won(id: number, amount: number, output: Number) {
+        console.log("won");
+       this._user[id]?.won(amount, output);
     }
-    lost(id:number,amount:number,outPut:Number){
-        this._user[id].lost(amount,outPut)
+
+    lost(id: number, amount: number, output: Number) {
+        console.log("lost");
+        this._user[id]?.lost(amount, output);
     }
     flush(outPut:Number){
         Object.keys(this._user).forEach((userId)=>{
